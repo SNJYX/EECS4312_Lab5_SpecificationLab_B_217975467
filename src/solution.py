@@ -1,5 +1,5 @@
-## Student Name:
-## Student ID: 
+## Student Name: Sanjay Raveendran
+## Student ID: 217975467
 
 """
 Stub file for the is allocation feasible exercise.
@@ -30,4 +30,23 @@ def is_allocation_feasible(
 
     """
     # TODO: Implement this function
-    raise NotImplementedError("suggest_slots function has not been implemented yet")
+  # Track total usage per resource
+    usage = {resource: 0 for resource in resources}
+
+    for request in requests:
+        # Each request must be a dictionary
+        if not isinstance(request, dict):
+            raise ValueError("Each request must be a dictionary")
+
+        for resource, amount in request.items():
+            # Resource must exist
+            if resource not in resources:
+                return False
+
+            usage[resource] += amount
+
+            # Capacity constraint
+            if usage[resource] > resources[resource]:
+                return False
+
+    return True
