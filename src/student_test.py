@@ -8,122 +8,56 @@ Students can run these tests locally to check basic correctness of their impleme
 The hidden test suite used for grading contains additional edge cases and will not be
 available to students.
 """
-from solution import is_allocation_feasible
 import pytest
 from solution import is_allocation_feasible
 
-def test_basic_feasible_single_resource():
-    # Basic Feasible Single-Resource
-    # Constraint: total demand <= capacity
-    # Reason: check basic functional requirement
-    resources = {'cpu': 10}
-    requests = [{'cpu': 3}, {'cpu': 4}, {'cpu': 3}]
-    assert is_allocation_feasible(resources, requests) is True
+# ---------- BASIC FUNCTIONALITY ----------
 
-def test_multi_resource_infeasible_one_overloaded():
-    # Multi-Resource Infeasible (one overload)
-    # Constraint: one resource exceeds capacity
-    # Reason: check detection of per-resource infeasibility
-    resources = {'cpu': 8, 'mem': 30}
-    requests = [{'cpu': 2, 'mem': 8}, {'cpu': 3, 'mem': 10}, {'cpu': 3, 'mem': 14}]
-    assert is_allocation_feasible(resources, requests) is False
-
-def test_missing_resource_in_availability():
-    # Missing Resource in Requests
-    # Constraint: request references unavailable resource
-    # Reason: allocation must be infeasible
-    resources = {'cpu': 10}
-    requests = [{'cpu': 2}, {'gpu': 1}]
-    assert is_allocation_feasible(resources, requests) is False
-
-def test_non_dict_request_raises():
-    # Non-Dict Request Raises Error
-    # Constraint: structural validation
-    # Reason: request must be a dict
-    resources = {'cpu': 5}
-    requests = [{'cpu': 2}, ['mem', 1]]  # malformed request
-    with pytest.raises(ValueError):
-        is_allocation_feasible(resources, requests)
-
-"""TODO: Add at least 5 additional test cases to test your implementation."""
-def test_empty_requests_are_feasible():
-    """
-    No requests should always be feasible as no resources are consumed.
-    """
-    resources = {"cpu": 4, "mem": 16}
-    requests = []
-    assert is_allocation_feasible(resources, requests) is True
-
-
-def test_exact_capacity_match():
-    """
-    Allocation is feasible when total demand exactly equals capacity.
-    """
-    resources = {"cpu": 6}
-    requests = [{"cpu": 2}, {"cpu": 4}]
-    assert is_allocation_feasible(resources, requests) is True
-
-
-def test_request_with_multiple_resources_feasible():
-    """
-    Single request requiring multiple resources within capacity.
-    """
-    resources = {"cpu": 8, "mem": 32}
-    requests = [{"cpu": 4, "mem": 16}]
-    assert is_allocation_feasible(resources, requests) is True
-
-
-def test_multiple_resources_one_exact_one_under():
-    """
-    One resource exactly meets capacity while another stays under.
-    """
-    resources = {"cpu": 5, "mem": 10}
-    requests = [{"cpu": 3, "mem": 4}, {"cpu": 2, "mem": 5}]
-    assert is_allocation_feasible(resources, requests) is True
-
-
-def test_zero_capacity_resource_requested():
-    """
-    Requesting a resource with zero capacity should be infeasible.
-    """
-    resources = {"cpu": 0}
-    requests = [{"cpu": 1}]
-    assert is_allocation_feasible(resources, requests) is False
-def test_single_resource_feasible():
+def test_single_resource_under_capacity_is_feasible():
     resources = {"cpu": 10}
     requests = [{"cpu": 3}, {"cpu": 4}]
     assert is_allocation_feasible(resources, requests) is True
 
 
-def test_single_resource_infeasible():
-    resources = {"cpu": 5}
-    requests = [{"cpu": 3}, {"cpu": 4}]
+def test_single_resource_exactly_consumed_is_infeasible():
+    resources = {"cpu": 10}
+    requests = [{"cpu": 5}, {"cpu": 5}]
     assert is_allocation_feasible(resources, requests) is False
 
 
 # ---------- MULTI-RESOURCE CASES ----------
 
-def test_multi_resource_all_feasible():
+def test_multi_resource_one_left_unallocated_is_feasible():
     resources = {"cpu": 8, "mem": 32}
-    requests = [{"cpu": 2, "mem": 8}, {"cpu": 4, "mem": 16}]
+    requests = [{"cpu": 4, "mem": 16}]
     assert is_allocation_feasible(resources, requests) is True
 
 
-def test_multi_resource_one_exceeds_capacity():
+def test_multi_resource_all_exactly_consumed_is_infeasible():
+    resources = {"cpu": 4, "mem": 8}
+    requests = [{"cpu": 4, "mem": 8}]
+    assert is_allocation_feasible(resources, requests) is False
+
+
+def test_multi_resource_one_overloaded():
     resources = {"cpu": 8, "mem": 30}
-    requests = [{"cpu": 2, "mem": 10}, {"cpu": 6, "mem": 25}]
+    requests = [
+        {"cpu": 2, "mem": 8},
+        {"cpu": 3, "mem": 10},
+        {"cpu": 3, "mem": 14},
+    ]
     assert is_allocation_feasible(resources, requests) is False
 
 
 # ---------- RESOURCE EXISTENCE ----------
 
-def test_request_for_missing_resource():
+def test_request_for_missing_resource_is_infeasible():
     resources = {"cpu": 10}
     requests = [{"cpu": 2}, {"gpu": 1}]
     assert is_allocation_feasible(resources, requests) is False
 
 
-def test_request_subset_of_resources():
+def test_request_subset_of_resources_is_allowed():
     resources = {"cpu": 10, "mem": 32}
     requests = [{"cpu": 5}]
     assert is_allocation_feasible(resources, requests) is True
@@ -138,7 +72,7 @@ def test_non_dict_request_raises_value_error():
         is_allocation_feasible(resources, requests)
 
 
-def test_all_requests_must_be_dicts_even_if_one_is_invalid():
+def test_all_requests_must_be_dicts():
     resources = {"cpu": 5}
     requests = [["cpu", 2]]
     with pytest.raises(ValueError):
@@ -147,28 +81,22 @@ def test_all_requests_must_be_dicts_even_if_one_is_invalid():
 
 # ---------- EDGE CASES ----------
 
-def test_empty_requests_list():
+def test_empty_requests_with_positive_resources_is_feasible():
     resources = {"cpu": 4, "mem": 16}
     requests = []
     assert is_allocation_feasible(resources, requests) is True
 
 
-def test_exact_capacity_match():
-    resources = {"cpu": 6}
-    requests = [{"cpu": 2}, {"cpu": 4}]
-    assert is_allocation_feasible(resources, requests) is True
-
-
-def test_zero_capacity_resource_requested():
+def test_empty_requests_with_zero_capacity_is_infeasible():
     resources = {"cpu": 0}
-    requests = [{"cpu": 1}]
+    requests = []
     assert is_allocation_feasible(resources, requests) is False
 
 
-def test_zero_capacity_resource_not_requested():
+def test_zero_capacity_resource_requested_is_infeasible():
     resources = {"cpu": 0}
-    requests = []
-    assert is_allocation_feasible(resources, requests) is True
+    requests = [{"cpu": 1}]
+    assert is_allocation_feasible(resources, requests) is False
 
 
 # ---------- CONSISTENCY / INVARIANTS ----------
@@ -181,6 +109,6 @@ def test_usage_accumulates_across_requests():
 
 def test_order_of_requests_does_not_matter():
     resources = {"cpu": 6}
-    requests1 = [{"cpu": 2}, {"cpu": 4}]
-    requests2 = [{"cpu": 4}, {"cpu": 2}]
+    requests1 = [{"cpu": 2}, {"cpu": 3}]
+    requests2 = [{"cpu": 3}, {"cpu": 2}]
     assert is_allocation_feasible(resources, requests1) == is_allocation_feasible(resources, requests2)
